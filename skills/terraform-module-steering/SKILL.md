@@ -5,7 +5,7 @@ description: >-
   secure-by-default Terraform/OpenTofu modules — then optionally orchestrate the full superpowers
   brainstorm → plan → build → verify flow from it. Use this WHENEVER the user wants to create,
   scaffold, design, or plan a NEW Terraform module (e.g. "build a terraform module for X",
-  "create terraform-module-aws-<service>"), OR improve, extend, add a feature to, harden, or audit
+  "create terraform-module-aws-{service}"), OR improve, extend, add a feature to, harden, or audit
   an EXISTING Terraform module (e.g. "add Y to my terraform module", "make our S3 module CIS/FSBP
   compliant", "harden this module", "what controls is my module missing?"), wants a steering/context
   document to feed into brainstorming or planning of such work, or wants to set up a Terraform module
