@@ -1,0 +1,25 @@
+{
+  "name": "terraform-module-steering",
+  "version": "0.1.0",
+  "description": "Generate a steering/context document that drives spec-driven creation OR safe evolution of high-quality, secure-by-default Terraform/OpenTofu modules — new modules, or feature-adds/hardening/audits of existing ones (with backward-compatibility + semver). Researches the target service's CIS Benchmark + provider security best practices (e.g. AWS FSBP), defaults to wrapping proven upstream modules with minimal inputs and hardcoded, non-overridable security, then optionally orchestrates the superpowers brainstorm -> plan -> build -> verify flow. Local content only; no git operations.",
+  "author": {
+    "name": "falconh"
+  },
+  "homepage": "https://github.com/falconh/terraform-module-steering",
+  "repository": "https://github.com/falconh/terraform-module-steering",
+  "license": "MIT",
+  "keywords": [
+    "terraform",
+    "opentofu",
+    "iac",
+    "module",
+    "steering",
+    "scaffolding",
+    "cis",
+    "fsbp",
+    "security",
+    "superpowers",
+    "spec-driven"
+  ],
+  "skills": "./skills"
+}

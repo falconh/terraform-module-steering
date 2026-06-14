@@ -1,0 +1,35 @@
+{
+  "name": "falconh",
+  "id": "falconh",
+  "owner": {
+    "name": "falconh"
+  },
+  "metadata": {
+    "description": "falconh's Claude Code plugins.",
+    "version": "1.0.0",
+    "repository": "https://github.com/falconh/terraform-module-steering"
+  },
+  "plugins": [
+    {
+      "name": "terraform-module-steering",
+      "source": "./",
+      "description": "Steering-document generator + spec-driven orchestrator for secure-by-default Terraform modules — new builds and safe changes to existing modules (backward-compat + semver). Per-service CIS/FSBP research, wrap proven upstream modules, minimal inputs, hardcoded non-overridable security, and a fmt/validate/tflint/checkov/test verification pipeline. Local content only (no git operations).",
+      "version": "0.1.0",
+      "author": {
+        "name": "falconh"
+      },
+      "keywords": [
+        "terraform",
+        "opentofu",
+        "iac",
+        "module",
+        "steering",
+        "cis",
+        "fsbp",
+        "security",
+        "superpowers"
+      ],
+      "category": "development"
+    }
+  ]
+}
