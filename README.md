@@ -28,30 +28,30 @@ It performs **no git operations** — it produces local content only and leaves 
 
 ## Install
 
+This plugin is distributed through a centralized Claude Code plugin marketplace. Once it's listed
+there, install it (replace `<marketplace>` with that marketplace's name):
+
 ```bash
-# 1. Add this repo as a marketplace
-claude plugin marketplace add falconh/terraform-module-steering
-
-# 2. Install the plugin (user scope)
-claude plugin install terraform-module-steering@falconh --scope user
-
-# 3. Restart Claude Code so the skill loads
+claude plugin install terraform-module-steering@<marketplace> --scope user
+# then restart Claude Code so the skill loads
 ```
 
-Then just ask, e.g. *"create a terraform module for an AWS SNS topic"* or *"write me a steering doc
-for terraform-module-aws-s3"*, and the skill triggers.
+For local or manual use you can also install the bundled `.skill` file, or load the skill directory
+for a single session with `claude --plugin-dir /path/to/terraform-module-steering`.
+
+Once installed, just ask — e.g. *"create a terraform module for an AWS SNS topic"* or *"harden our
+existing S3 module against CIS/FSBP"* — and the skill triggers.
 
 ## Layout
 
 ```
 .
 ├── .claude-plugin/
-│   ├── marketplace.json   # marketplace "falconh" listing this plugin (source ".")
-│   └── plugin.json        # plugin manifest (skills -> ./skills)
+│   └── plugin.json        # plugin manifest (skills -> ./skills); listed by a central marketplace
 └── skills/
     └── terraform-module-steering/
         ├── SKILL.md
-        ├── references/    # security-research, steering-template, superpowers-handoff, verification-pipeline
+        ├── references/    # security-research, steering + change templates, brownfield-mode, superpowers-handoff, verification, module-documentation
         ├── scripts/       # setup-workspace.sh (verify / --install)
         └── assets/        # worked example (AWS S3)
 ```
