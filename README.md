@@ -1,11 +1,12 @@
 # terraform-module-steering
 
-A Claude Code **skill + plugin** that turns "I need a Terraform module for X" into a governed,
-secure-by-default module — by first producing a portable **steering document** (a context artifact
-that captures every decision before code exists), then optionally driving the whole spec-driven
-build from it.
+A **Claude Code and Codex** skill + plugin that turns "I need a Terraform module for X" into a
+governed, secure-by-default module — by first producing a portable **steering document** (a context
+artifact that captures every decision before code exists), then optionally driving the whole
+spec-driven build from it.
 
-It is distributed as a single-plugin **marketplace**, so it can be installed anywhere.
+It ships manifests for both agents (`.claude-plugin/` and `.codex-plugin/`) over a single shared
+skill, so the same plugin can be listed by a marketplace and installed from either tool.
 
 ## What it does
 
@@ -28,16 +29,25 @@ It performs **no git operations** — it produces local content only and leaves 
 
 ## Install
 
-This plugin is distributed through a centralized Claude Code plugin marketplace. Once it's listed
-there, install it (replace `<marketplace>` with that marketplace's name):
+This plugin is distributed through a centralized plugin marketplace that lists it for both agents.
+Replace `<marketplace>` with that marketplace's name.
+
+**Claude Code:**
 
 ```bash
 claude plugin install terraform-module-steering@<marketplace> --scope user
 # then restart Claude Code so the skill loads
 ```
 
-For local or manual use you can also install the bundled `.skill` file, or load the skill directory
-for a single session with `claude --plugin-dir /path/to/terraform-module-steering`.
+For local or manual Claude Code use you can also load the skill directory for a single session with
+`claude --plugin-dir /path/to/terraform-module-steering`.
+
+**Codex:** add the marketplace, then enable the plugin from the `/plugins` directory:
+
+```bash
+codex plugin marketplace add <owner>/<marketplace-repo>
+# then, inside Codex, run /plugins and enable terraform-module-steering
+```
 
 Once installed, just ask — e.g. *"create a terraform module for an AWS SNS topic"* or *"harden our
 existing S3 module against CIS/FSBP"* — and the skill triggers.
@@ -47,7 +57,9 @@ existing S3 module against CIS/FSBP"* — and the skill triggers.
 ```
 .
 ├── .claude-plugin/
-│   └── plugin.json        # plugin manifest (skills -> ./skills); listed by a central marketplace
+│   └── plugin.json        # Claude Code manifest (skills -> ./skills)
+├── .codex-plugin/
+│   └── plugin.json        # Codex manifest (skills -> ./skills/)
 └── skills/
     └── terraform-module-steering/
         ├── SKILL.md
