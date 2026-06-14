@@ -1,20 +1,17 @@
 ---
 name: terraform-module-steering
 description: >-
-  Generate a reusable steering/context document that drives spec-driven work on high-quality,
-  secure-by-default Terraform/OpenTofu modules — then optionally orchestrate the full superpowers
-  brainstorm → plan → build → verify flow from it. Use this WHENEVER the user wants to create,
-  scaffold, design, or plan a NEW Terraform module (e.g. "build a terraform module for X",
-  "create terraform-module-aws-{service}"), OR improve, extend, add a feature to, harden, or audit
-  an EXISTING Terraform module (e.g. "add Y to my terraform module", "make our S3 module CIS/FSBP
-  compliant", "harden this module", "what controls is my module missing?"), wants a steering/context
-  document to feed into brainstorming or planning of such work, or wants to set up a Terraform module
-  workspace (terraform, tflint, checkov, required plugins). The skill researches the target service's
-  CIS Benchmark + provider security best practices (e.g. AWS FSBP) per service and proposes them,
-  defaults to wrapping proven upstream modules with minimal inputs and hardcoded, non-overridable
-  security, treats backward compatibility + semver as first-class when changing an existing module,
-  always documents the result (a clear consumer README + a durable spec/feature/security-control
-  design record), and produces local content only (NO git operations).
+  Generate a steering/context document that drives spec-driven work on secure-by-default
+  Terraform/OpenTofu modules, then optionally orchestrate the superpowers brainstorm → plan →
+  build → verify flow. Use WHENEVER the user wants to create, scaffold, or design a NEW Terraform
+  module ("build a terraform module for X", "create terraform-module-aws-{service}"), OR improve,
+  extend, add a feature to, harden, or audit an EXISTING module ("add Y to my module", "make our S3
+  module CIS/FSBP compliant", "what controls is my module missing?"), wants a steering/context doc
+  for such work, or wants to set up a Terraform module workspace (terraform, tflint, checkov).
+  Researches each service's CIS Benchmark + provider best practices (e.g. AWS FSBP), wraps proven
+  upstream modules with minimal inputs and hardcoded, non-overridable security, treats
+  backward-compatibility + semver as first-class on changes, always ships a consumer README + a
+  durable design record, and produces local content only (NO git operations).
 ---
 
 # Terraform Module Steering
