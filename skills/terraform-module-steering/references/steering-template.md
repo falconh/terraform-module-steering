@@ -11,9 +11,17 @@
 - **Target environments:** _dev / test / staging / prod_
 
 ## 2. Reuse decision
-- **Wrap or scratch:** _wrap `<registry/module>` pinned `vX.Y.Z` / build from scratch_
+- **Wrap or scratch (creator-confirmed):** _wrap `<registry/module>` pinned `vX.Y.Z` / the creator's
+  preferred module / build from scratch — record which the creator chose and why_
 - **Why:** _the upstream module exposes the needed controls / nothing suitable exists_
-- **Provider + Terraform version floor:** _e.g. terraform >= 1.6, aws >= 6.42 (match upstream)_
+- **Provider + Terraform version floor:** _e.g. terraform >= 1.6, aws >= 6.42._ Floors are
+  **provisional until confirmed against the pinned upstream module's `versions.tf`** at build — match
+  (or exceed) it; don't guess. Prefer the **latest** Terraform for the toolchain when feasible (SKILL.md
+  step 2). Where the provider offers it, resolve version-like defaults from a **data source** (a "latest
+  GA" lookup) rather than a hardcoded literal that goes stale.
+- **Upstream interface — confirm from source, not memory:** author every wrapped-module call from the
+  module's *downloaded* `variables.tf`/`outputs.tf` (exact input/output names + nested object/map shapes
+  drift across versions). See [wrapping-upstream-modules.md](wrapping-upstream-modules.md).
 
 ## 3. Consumer interface (minimise inputs)
 - **Required inputs:** _typically `name`, `environment`_
@@ -34,7 +42,10 @@ _Removed controls must have a reason. Custom/extra benchmarks go here too._
 
 ## 5. Conventions
 - **Files:** `versions.tf`, `variables.tf`, `main.tf`, `outputs.tf`, plus topic files (`kms.tf`,
-  `logging.tf`…). Standard naming; reserve `this` for genuine singletons; descriptive resource names.
+  `logging.tf`…). Create a topic file only when it owns **real resources**; fold pure-expression logic
+  (mappings, effective values) into `locals.tf` rather than an empty-ish topic file. (Brownfield: match
+  the existing module's layout instead of imposing this.) Standard naming; reserve `this` for genuine
+  singletons; descriptive resource names.
 - **Block ordering:** resource → `count`/`for_each` first, then args, then `tags`, then `depends_on`,
   then `lifecycle`. Variables → description → type → default → validation.
 - **Version pinning:** pin the upstream module to an exact version; set a provider version floor.
