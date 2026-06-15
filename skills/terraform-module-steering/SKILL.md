@@ -35,7 +35,9 @@ result from it. The skill can hand the document to `superpowers:brainstorming` a
   [references/security-research.md](references/security-research.md).
 - **Mandatory controls are enforced as hardcoded literals, not variables**, so a consumer cannot
   weaken them. Minimise consumer inputs (typically just `name` + `environment`).
-- **Reuse before building.** Prefer wrapping a proven upstream module pinned to a version.
+- **Reuse before building — but the creator picks the base.** Prefer wrapping a proven upstream module
+  pinned to a version; after identifying the candidate, let the creator choose to wrap it, supply their
+  own preferred module, or build from scratch.
 - **When changing an existing module, do no harm.** Default to non-breaking, additive changes;
   surface any breaking change with a semver-major bump + migration note. See
   [references/brownfield-mode.md](references/brownfield-mode.md).
@@ -84,9 +86,16 @@ consumers — surface it (semver-major + migration note), don't apply it silentl
 ### Path A — NEW module (greenfield)
 
 **3A. Reuse research.** Use `context7` (resolve-library-id → query-docs) and web search to find whether
-a proven upstream module covers this service. Record: wrap `<module>` pinned `vX.Y.Z`, or scratch with
-a reason. Wrapping is strongly preferred — it inherits maintenance and lets you hardcode security by
-passing literals and exposing no override variable. When you wrap, **confirm the module's exact
+a proven upstream module covers this service, and identify the best candidate(s) with their latest
+stable version. Wrapping is strongly preferred — it inherits maintenance and lets you hardcode security
+by passing literals and exposing no override variable — **but the base module is a foundational,
+trust/supply-chain decision the creator owns: present what you found and let them choose before you
+commit.** Ask, e.g.:
+> "For `<service>` the proven base looks like `<module>` pinned `vX.Y.Z`. Shall I (a) wrap that, (b) wrap
+> a different base you prefer — give me the source, or (c) build from scratch instead of wrapping?"
+
+Record the choice + reason in the steering doc: (a) the recommendation, (b) the creator's module as the
+base, or (c) scratch with the reason wrapping was declined. When you wrap, **confirm the module's exact
 interface from its downloaded source** before authoring any module call — `terraform init` then read
 `.terraform/modules/<name>/variables.tf` + `outputs.tf`. Registry/`context7` docs are directional;
 exact input/output names and nested object/map shapes drift between modules and versions, and guessing

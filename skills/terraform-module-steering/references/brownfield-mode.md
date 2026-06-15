@@ -42,6 +42,11 @@ Use `code-intelligence`/`rg` to navigate. Produce a short "current state" snapsh
 Present three buckets: **new feature(s)**, **security gaps to close**, **convention fixes**. The creator
 adds/removes with a documented reason and may add custom benchmarks. Record every decision.
 
+If the change would **introduce, swap, or drop a wrapped base module** (start wrapping where the module
+was scratch, move to a different upstream, or drop the wrapper), treat that like greenfield reuse:
+present the candidate and let the creator choose — use it, supply their own preferred module, or stay
+as-is. It's a foundational decision, and a base swap is itself a breaking change (see §D).
+
 ## D. Backward-compatibility analysis (the part greenfield doesn't have)
 
 Classify EVERY proposed change. This drives the semver bump and the migration note.

@@ -11,7 +11,8 @@
 - **Target environments:** _dev / test / staging / prod_
 
 ## 2. Reuse decision
-- **Wrap or scratch:** _wrap `<registry/module>` pinned `vX.Y.Z` / build from scratch_
+- **Wrap or scratch (creator-confirmed):** _wrap `<registry/module>` pinned `vX.Y.Z` / the creator's
+  preferred module / build from scratch — record which the creator chose and why_
 - **Why:** _the upstream module exposes the needed controls / nothing suitable exists_
 - **Provider + Terraform version floor:** _e.g. terraform >= 1.6, aws >= 6.42._ Floors are
   **provisional until confirmed against the pinned upstream module's `versions.tf`** at build — match
