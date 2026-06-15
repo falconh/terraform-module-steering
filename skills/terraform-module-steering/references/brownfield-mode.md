@@ -22,6 +22,11 @@ Locate the module (the creator names a path/repo). Read and record — change no
 
 Use `code-intelligence`/`rg` to navigate. Produce a short "current state" snapshot.
 
+> If the change includes **bumping a wrapped upstream module or provider pin**, re-confirm the *new*
+> version's interface from its downloaded source (`.terraform/modules/...`) — a bump can silently rename
+> or restructure inputs/outputs, which is a **breaking change** to surface, not absorb. See
+> [wrapping-upstream-modules.md](wrapping-upstream-modules.md).
+
 ## B. Gap-diff + capture the feature
 
 1. Research the service's CIS + provider controls exactly as greenfield does
@@ -49,6 +54,7 @@ Classify EVERY proposed change. This drives the semver bump and the migration no
 | Change a default value so existing behaviour changes | **Breaking (behavioural)** | major + call out the operational impact |
 | Hardcoding a control that was a **variable** (removes the variable) | **Breaking** | major; OR keep the variable but validate it to reject insecure values (soft path) |
 | Change that alters resource addresses (`count`→`for_each`, renames, new wrapper) | **Breaking (state churn)** | major + `moved {}` blocks so consumers don't see destroy/recreate |
+| Raise the declared `required_version` or provider floor (e.g. to adopt the latest Terraform) | **Breaking (consumer toolchain)** | major + note; recommend latest for *your* dev/CI toolchain without forcing it on consumers unless justified |
 
 Special care when **closing a security gap on a live resource** (e.g. now enforcing encryption, or
 switching to a CMK): applying it may **replace or mutate real infrastructure**. Say so plainly —

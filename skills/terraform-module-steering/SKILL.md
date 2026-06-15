@@ -68,6 +68,17 @@ plugins (`terraform-skill@antonbabenko`, `context7`) are present vs missing. **O
 run `bash <skill-dir>/scripts/setup-workspace.sh --install`. Honest caveat: CLIs work immediately, but
 newly-installed **plugins load only after a Claude Code restart**. Skip if they only want the document.
 
+**Identify the latest Terraform and recommend it — feasibility-gated.** Determine the latest released
+HashiCorp Terraform (e.g. `tfenv list-remote | head`, the releases API, or
+`https://checkpoint-api.hashicorp.com/v1/check/terraform`). Recommend developing/testing on it **only
+after verifying feasibility** with the chosen dependencies: the wrapped upstream module(s) and provider
+declare version *floors* (`>=`), so the latest usually satisfies them — confirm there's no upper bound
+and that the language features you'll rely on exist. If the installed CLI is older and matching the
+latest needs an **upgrade, ask the creator's permission first**, then upgrade (e.g.
+`tfenv install <latest> && tfenv use <latest>`). For a NEW module you may set `required_version` to the
+latest; for an EXISTING module, **raising the declared `required_version` is a breaking change** for
+consumers — surface it (semver-major + migration note), don't apply it silently.
+
 ---
 
 ### Path A — NEW module (greenfield)
@@ -75,7 +86,12 @@ newly-installed **plugins load only after a Claude Code restart**. Skip if they 
 **3A. Reuse research.** Use `context7` (resolve-library-id → query-docs) and web search to find whether
 a proven upstream module covers this service. Record: wrap `<module>` pinned `vX.Y.Z`, or scratch with
 a reason. Wrapping is strongly preferred — it inherits maintenance and lets you hardcode security by
-passing literals and exposing no override variable.
+passing literals and exposing no override variable. When you wrap, **confirm the module's exact
+interface from its downloaded source** before authoring any module call — `terraform init` then read
+`.terraform/modules/<name>/variables.tf` + `outputs.tf`. Registry/`context7` docs are directional;
+exact input/output names and nested object/map shapes drift between modules and versions, and guessing
+them is the single biggest source of build rework. See
+[references/wrapping-upstream-modules.md](references/wrapping-upstream-modules.md).
 
 **4A. Security research (per service).** Research the actual CIS + provider controls for this service;
 map each to a hardcoded enforcement. Default to CIS/the provider benchmark. ([security-research.md](references/security-research.md))
@@ -144,4 +160,5 @@ fully hands-off trigger (inject the doc on every prompt in a Terraform repo) is 
 - [references/module-documentation.md](references/module-documentation.md) — consumer README structure + durable design-record convention (both modes).
 - [references/superpowers-handoff.md](references/superpowers-handoff.md) — passing the doc into brainstorming/writing-plans.
 - [references/verification-pipeline.md](references/verification-pipeline.md) — fmt/validate/tflint/checkov/test + checkov FP handling.
+- [references/wrapping-upstream-modules.md](references/wrapping-upstream-modules.md) — confirm a wrapped module's exact interface from its downloaded source (avoids the biggest build-rework trap).
 - [assets/steering-example-aws-s3.md](assets/steering-example-aws-s3.md) — a complete worked example.

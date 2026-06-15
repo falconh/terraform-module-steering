@@ -17,24 +17,55 @@ passes, and checkov reports the in-scope security controls as passed (0 unexplai
 
 ## `terraform test` with mock_provider (no credentials)
 
-Use `command = apply` with a mocked provider so assertions can read computed and **set-type** values
-(encryption rules, lifecycle, policy statements are set/dynamic blocks and cannot be indexed `[0]`
-under `command = plan`).
+Choose the run mode deliberately:
+- **`command = plan`** — when you assert on inputs, locals, outputs, or conditional resource *counts*.
+  Faster, and it avoids the apply-only pitfalls below.
+- **`command = apply`** — only when an assertion needs a **computed** or **set-type** value (e.g. a
+  created key's rotation flag, or set/dynamic blocks that can't be indexed `[0]` under plan).
+- If the module declares an **`ephemeral`** (write-only) variable — e.g. a `password_wo` — then
+  `command = apply` fails with *"ephemeral variable … was not set during the plan phase"* because
+  ephemeral values don't carry plan→apply in a test. Use `command = plan` for those runs.
 
-Critical gotcha learned the hard way: a mocked `aws_iam_policy_document` returns a non-JSON stub, which
-fails any resource that validates a policy as JSON (e.g. `aws_kms_key.policy`). Give it a valid default:
+Mock the data sources whose output is **format-validated** downstream, or the upstream module errors on
+mock junk. Two that bite almost every AWS wrap:
 
 ```hcl
 mock_provider "aws" {
+  # A non-JSON stub fails any resource that validates a policy as JSON (e.g. aws_kms_key.policy).
   mock_data "aws_iam_policy_document" {
     defaults = { json = "{\"Version\":\"2012-10-17\",\"Statement\":[]}" }
   }
+  # A random partition makes IAM policy ARNs ("arn:${partition}:iam::aws:policy/…") fail ARN validation.
+  mock_data "aws_partition" {
+    defaults = { partition = "aws", dns_suffix = "amazonaws.com" }
+  }
+  # Same idea for any data source whose value is parsed/validated (engine/version lookups, regions, …):
+  # give it a realistic default rather than letting the mock invent one.
 }
 ```
 
-Assert on what the module *owns* (a created KMS key's rotation flag, conditional resource counts,
+Assert on what the module *owns* (a created key's rotation flag, conditional resource counts,
 outputs). Asserting on attributes deep inside a wrapped upstream module is brittle — leave those to
 checkov.
+
+### Gotchas that will waste a build cycle if you don't know them
+- **`check` block assertions are test *failures*, not warnings, under `terraform test`.** In real
+  plan/apply a failed `check` only warns — but the test harness fails the run. So a module whose
+  controls default ON, plus `check` blocks that warn when a (cost/safety) feature is enabled/disabled,
+  fails *every* test. Handle it on purpose: in the shared `variables {}` set those toggles to their
+  non-warning value so unrelated runs stay green, and add **dedicated** runs that flip each toggle with
+  `expect_failures = [check.<name>]` — those runs *are* how you test that the warning fires. (This bites
+  often, because the steering pattern itself favours `check`-block warnings.)
+- **`expect_failures` does not halt the plan.** It records that a checkable object (a variable
+  validation, a `check`) failed, but Terraform keeps evaluating — so an incomplete/skeleton config can
+  throw an *unrelated* error that fails the run even though your expected failure also fired. Either
+  finish enough of the config to plan cleanly, or read the skeleton error *as* your RED and move to GREEN.
+- **A ternary evaluates BOTH branches.** `local.is_x ? module.a[0].out : module.b[0].out` errors when
+  the non-selected module is `count = 0` (indexing an empty list). Use `one(module.a[*].out)` /
+  `one(module.b[*].out)`, which yield the single element or `null`.
+- **Guard variant lookups with a default.** A map keyed on a validated input
+  (`{ "a" = …, "b" = … }[var.kind]`) hard-errors on an out-of-range key *before* the variable's
+  validation message surfaces. Use `lookup(map, key, <safe-default>)` so the validation wins.
 
 ## checkov false positives when wrapping `terraform-aws-modules`-style modules
 
@@ -50,6 +81,18 @@ terraform plan -out=tfplan          # needs provider creds
 terraform show -json tfplan | checkov -f -
 ```
 
+Two more sources of false failures specific to **wrapping registry modules**:
+- **A `count`-gated wrap is scanned even when its `count = 0`.** If one input selects between two
+  upstream modules (e.g. `deployment = "a" | "b"`), checkov statically scans *both* module bodies
+  regardless of which is instantiated, so the un-selected branch's resources — often configured through
+  `coalesce(each.value.x, var.<group>_x)` indirection it can't resolve — report failures. Confirm the
+  control is actually wired in `.terraform/modules/...`, then suppress.
+- **Registry-source / native-capability checks that don't apply.** A "use a commit hash for the module
+  source" check (`CKV_TF_1`) is wrong for registry modules — you pin by *exact version*, which is the
+  correct practice; and a check that demands a *managed* service (e.g. an AWS Backup plan) is out of
+  scope when the module deliberately uses the resource's **native** capability (e.g. native automated
+  backups + point-in-time recovery).
+
 ### Suppress honestly, scoped tightly
 - **Inline `#checkov:skip=<ID>:<reason>`** on resources *you* own (e.g. your KMS policy doc). This
   keeps the check active everywhere else. Prefer this.
@@ -63,6 +106,7 @@ skip-check:
   - CKV_AWS_19    # encryption -> aws_s3_bucket_server_side_encryption_configuration (false positive under static scan)
   - CKV_AWS_21    # versioning -> aws_s3_bucket_versioning (false positive under static scan)
   - CKV_AWS_144   # cross-region replication — out of CIS/FSBP scope for this module
+  - CKV_TF_1      # registry modules pin by exact version, not a commit hash — not applicable
 ```
 
 Never silently suppress a real control. Every skip is a documented false-positive or an explicit

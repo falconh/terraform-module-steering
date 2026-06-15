@@ -34,10 +34,21 @@ Pass these explicitly so the superpowers skills don't drift from the steering do
 - the interface contract (required/optional inputs, the non-exposed hardcoded set, outputs);
 - the verification bar (the exact commands that define "done").
 
-## Hard rule
-**No git operations** at any point — not in brainstorming output, not in the plan, not in
-implementation. If a superpowers step proposes committing or branching, skip that part and tell the
-creator the skill leaves version control to them.
+## Hard rule — no git, and exactly where each superpowers step tries to do it
+**No git operations** at any point. Each chained skill has a built-in git step that conflicts with
+this — neutralise them explicitly so you don't rediscover the conflict mid-flow:
+
+- **`superpowers:brainstorming`** wants to *write the design doc AND commit it*. Write the doc; **skip
+  the commit.**
+- **`superpowers:writing-plans`** templates a per-task **"Commit"** step (and `git add`). **Omit those
+  steps** from the plan; tasks end at "tests green", not "committed".
+- **`superpowers:executing-plans`** ends by invoking **`superpowers:finishing-a-development-branch`**
+  (merge / PR / branch cleanup — all git). **Skip that terminal hand-off entirely**; report completion
+  with the verification evidence instead.
+
+Tell the creator once that the skill leaves version control to them. If the creator later **explicitly**
+asks for git (init / commit / push / tag / PR), that is their instruction and it overrides this default
+— do it then, but never on your own initiative.
 
 ## Optional: fully hands-off triggering (only if asked)
 To inject the steering doc automatically on every prompt inside a Terraform repo (zero-touch), a
