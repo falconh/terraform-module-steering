@@ -1,0 +1,9 @@
+{ "expectations": [
+  { "text": "reached_green", "passed": true, "evidence": "fmt/validate/tflint clean; terraform test 5 passed 0 failed; checkov 37 passed 0 failed 4 documented skips" },
+  { "text": "interface_from_source", "passed": true, "evidence": "read v1.11.0 source (GitHub + terraform init); confirmed multi_az forces failover, self-created slow-log group" },
+  { "text": "write_only_token_handled (no state leak, tests use command=plan)", "passed": true, "evidence": "ephemeral var persisted only via Secrets Manager secret_string_wo; auth_token not routed through wrapper" },
+  { "text": "check_warning_handled (warning fires AND terraform test green)", "passed": true, "evidence": "DISCOVERED via probe after first run came back 0 passed/1 failed; then added expect_failures. Reached green but via blind failure + diagnosis (the rework the new guidance pre-empts)" },
+  { "text": "correct_test_mocks", "passed": true, "evidence": "mock_provider; repointed a mock-randomised computed replication_group_id assertion" },
+  { "text": "latest_tf_identified", "passed": true, "evidence": "v1.15.6 installed and used" },
+  { "text": "no_git", "passed": true, "evidence": "no .git in output" }
+] }

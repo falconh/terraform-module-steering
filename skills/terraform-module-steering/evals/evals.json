@@ -1,0 +1,60 @@
+{
+  "skill_name": "terraform-module-steering",
+  "baseline_policy": "master is the baseline. There is no frozen skill snapshot — check out the skill at the point you want to compare against. To test the CURRENT state of the skill, run with_skill (the skill on master) vs without_skill (no skill). To evaluate a NEW feature, run the feature branch vs master.",
+  "how_to_run": "See ../evals/README.md ('Running an eval'). Standard skill-creator practice: spawn a with_skill and a baseline subagent per eval into a workspace iteration dir, capture timing.json, grade against the assertions below into grading.json, then aggregate + view. Use verify.sh for the deterministic pipeline stage.",
+  "evals": [
+    {
+      "id": 0,
+      "name": "greenfield-ecr-full-build",
+      "mode": "greenfield (Path A)",
+      "status": "historical — recorded run in iteration-1 (archived A/B for the change that produced today's master)",
+      "arms": ["old_skill", "with_skill"],
+      "prompt": "Build a secure-by-default Terraform module terraform-module-aws-ecr ... (see launched prompt).",
+      "expected_output": "Complete module reaching green pipeline; interface from source; no git. NOTE: simple service — controls a no-regression check, not a strong differentiator.",
+      "result": "TIE — both new and old reached green (terraform test 10/0, checkov 27/0/3), interface-from-source, latest TF 1.15.6, no git. Cost ~equal.",
+      "files": [],
+      "assertions": [
+        "reached_green", "interface_from_source", "correct_test_mocks", "latest_tf_identified", "no_git", "cost"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "greenfield-elasticache-redis-gotcha-build",
+      "mode": "greenfield (Path A)",
+      "status": "historical — recorded run in iteration-1 (the differentiating A/B for the v1.2.0 change now on master)",
+      "arms": ["old_skill", "with_skill"],
+      "prompt": "Build a secure-by-default Terraform module terraform-module-aws-elasticache-redis for an ElastiCache for Redis replication group: customer-managed KMS at rest + TLS in transit; a WRITE-ONLY auth token never stored in state; Multi-AZ/automatic-failover ON by default with a plan/apply cost WARNING; slow-log to CloudWatch. Full build + terraform test (mock_provider) + checkov. Latest Terraform. No git.",
+      "expected_output": "Complete module reaching green. The build naturally hits the gotchas the change targets: write-only var + ephemeral (command=plan), check-block warnings that fail terraform test unless handled, and the wrapped interface. New skill should navigate these with less rework than old.",
+      "result": "WIN for with_skill — both reached green, but old_skill discovered the check-block warning BLIND (first run 0 passed / 1 failed, then diagnosed and added expect_failures); with_skill cited the gotcha up front ('exactly as the skill warned'), handled it pre-emptively, and landed terraform test 10/0 (vs 5/0) and checkov 43/0/5 (vs 37/0/4).",
+      "files": [],
+      "assertions": [
+        "reached_green", "interface_from_source", "wrote_only_token_handled (ephemeral, no state leak, tests use command=plan)", "check_warning_handled (warning emitted AND terraform test still green)", "correct_test_mocks", "latest_tf_identified", "no_git", "cost"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "brownfield-harden-legacy-s3-no-break",
+      "mode": "brownfield (Path B)",
+      "status": "runnable — tests the CURRENT skill; fixture committed; not yet run",
+      "arms": ["without_skill", "with_skill"],
+      "axis": "capability eval (does the current skill produce correct brownfield discipline?) — with_skill = skill on master, baseline = no skill",
+      "target_module": "fixtures/terraform-module-aws-s3-legacy (committed). A valid, green-but-imperfect S3 module: terraform test 2/0, checkov 10 passed / 5 failed. Gaps: encryption optional + SSE-S3 not CMK, no access logging, no TLS-only policy, public-access block is weakenable. Two of the controls (encryption_enabled, block_public_access) are exposed as variables — hardcoding them is a breaking change unless handled with the soft path.",
+      "prompt": "Here is our existing module skills/terraform-module-steering/evals/fixtures/terraform-module-aws-s3-legacy. Harden it to CIS/FSBP AND add one new feature (e.g. server access logging to a log bucket, or an optional lifecycle-expiration input) WITHOUT breaking existing consumers. Produce the change/delta steering doc, then build it: the existing terraform tests must stay green, add tests for the new feature and each closed gap, run checkov, use the latest Terraform, and do NO git operations.",
+      "expected_output": "A delta/change steering doc (change-steering-template) with current-state -> target-state -> a per-row additive/breaking classification -> a semver decision + migration notes. Changes are additive-first; any breaking change is flagged major with a migration note and moved {} blocks for address churn; closing a gap on a live resource calls out the operational impact (mutate/replace). Existing tests still pass; new tests cover the feature and each closed gap; pipeline reaches green; no git. with_skill should perform assessment -> gap-diff -> backward-compat analysis explicitly; without_skill is expected to skip assessment/semver/moved-blocks and risk breaking the interface (e.g. by silently deleting the encryption_enabled / block_public_access variables).",
+      "files": ["fixtures/terraform-module-aws-s3-legacy"],
+      "assertions": [
+        "assessed_existing_interface (read every var/output + how each control is enforced)",
+        "gap_diff_vs_cis_fsbp (named the missing controls AND the weakenable encryption_enabled/block_public_access vars)",
+        "backward_compat_classified (every change tagged additive vs breaking)",
+        "semver_decision_with_migration (minor/major chosen with reason; migration note if major)",
+        "moved_blocks_for_address_churn (no spurious destroy/recreate)",
+        "existing_tests_still_green (legacy.tftest.hcl still 2/0)",
+        "new_tests_for_feature_and_gaps",
+        "operational_impact_called_out (live-resource mutate/replace stated plainly)",
+        "reached_green",
+        "no_git",
+        "cost"
+      ]
+    }
+  ]
+}

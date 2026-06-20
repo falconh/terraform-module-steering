@@ -1,0 +1,16 @@
+# checkov config for terraform-module-aws-ecr.
+# The module wraps terraform-aws-modules/ecr/aws; download-external-modules lets
+# checkov follow the wrapper down to the real aws_ecr_repository / aws_kms_key so
+# the hardcoded FSBP controls (scan-on-push, immutable tags, KMS, lifecycle) are
+# evaluated on the actual resources.
+download-external-modules: true
+compact: true
+# The FSBP ECR controls PASS on the real resources reached via the external module
+# (CKV_AWS_163 scan-on-push, CKV_AWS_136 KMS encryption). The 3 KMS-policy findings on
+# our own data source are suppressed inline (with reasons) in kms.tf.
+skip-check:
+  # By design: the upstream module is pinned to an exact registry version TAG (3.2.0),
+  # which is this skill's required pinning convention and PASSES CKV_TF_2. CKV_TF_1 wants
+  # a git commit-hash source instead — incompatible with a registry version pin. Fires on
+  # the `module "ecr"` block, which cannot carry an inline skip the way a resource can.
+  - CKV_TF_1  # registry version-tag pin (3.2.0) used by convention instead of a commit hash; CKV_TF_2 passes.

@@ -1,0 +1,7 @@
+{ "expectations": [
+  { "text": "reached_green (fmt/validate/tflint/terraform test/checkov)", "passed": true, "evidence": "fmt clean; validate ok; tflint clean; terraform test 10 passed 0 failed; checkov 27 passed 0 failed 3 documented skips" },
+  { "text": "interface_from_source (init + read downloaded variables.tf/outputs.tf)", "passed": true, "evidence": "scaffolded probe, terraform init, read .terraform/modules/ecr source for exact names/wiring" },
+  { "text": "correct_test_mocks", "passed": true, "evidence": "mock_provider with aws_iam_policy_document JSON default (pre-existing skill gotcha); command=apply for set-type" },
+  { "text": "latest_tf_identified", "passed": true, "evidence": "identified v1.15.6; floor left at upstream >=1.5.7" },
+  { "text": "no_git", "passed": true, "evidence": "git rev-parse returns not-a-repo" }
+] }

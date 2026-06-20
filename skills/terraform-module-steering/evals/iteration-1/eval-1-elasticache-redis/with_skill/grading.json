@@ -1,0 +1,9 @@
+{ "expectations": [
+  { "text": "reached_green", "passed": true, "evidence": "fmt/validate/tflint clean; terraform test 10 passed 0 failed; checkov 43 passed 0 failed 5 documented skips" },
+  { "text": "interface_from_source", "passed": true, "evidence": "init + read .terraform/modules/elasticache variables.tf/outputs.tf/main.tf + providers schema; caught SG-rule shape and cloudwatch_log_groups map drift before tests" },
+  { "text": "write_only_token_handled (no state leak, tests use command=plan)", "passed": true, "evidence": "ephemeral var persisted only via Secrets Manager secret_string_wo; auth_token=null to wrapper; tests command=plan throughout" },
+  { "text": "check_warning_handled (warning fires AND terraform test green)", "passed": true, "evidence": "cited the gotcha UP FRONT ('exactly as the skill warned'); expect_failures on runs + a dedicated run proving the warning fires + added check to validation-run expectations" },
+  { "text": "correct_test_mocks", "passed": true, "evidence": "mock_provider; command=plan; repointed computed-value assertions to plan-known fields" },
+  { "text": "latest_tf_identified", "passed": true, "evidence": "v1.15.6 via checkpoint API; floor >=1.11 for write-only langauge" },
+  { "text": "no_git", "passed": true, "evidence": "output dir not a git repo; external-module .git cleaned" }
+] }

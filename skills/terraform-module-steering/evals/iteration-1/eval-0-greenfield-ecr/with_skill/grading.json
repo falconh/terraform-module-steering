@@ -1,0 +1,7 @@
+{ "expectations": [
+  { "text": "reached_green (fmt/validate/tflint/terraform test/checkov)", "passed": true, "evidence": "fmt clean; validate ok; tflint clean; terraform test 10 passed 0 failed; checkov 27 passed 0 failed 3 documented skips" },
+  { "text": "interface_from_source (init + read downloaded variables.tf/outputs.tf)", "passed": true, "evidence": "ran terraform init -backend=false; read .terraform/modules/ecr/{variables,outputs,versions}.tf and main.tf wiring" },
+  { "text": "correct_test_mocks", "passed": true, "evidence": "mock_provider; used command=apply for computed KMS key_id assertion, plan elsewhere" },
+  { "text": "latest_tf_identified", "passed": true, "evidence": "identified v1.15.6 via checkpoint API; CLI already matched, no upgrade" },
+  { "text": "no_git", "passed": true, "evidence": "git rev-parse confirms not a repo; caches cleaned" }
+] }

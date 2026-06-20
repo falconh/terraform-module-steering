@@ -1,0 +1,1 @@
+{ "eval_id": 0, "eval_name": "greenfield-ecr-full-build", "prompt": "Build terraform-module-aws-ecr end-to-end (wrap upstream, hardcode CIS/FSBP, full verification). Simple service = no-regression check.", "assertions": ["reached_green","interface_from_source","correct_test_mocks","latest_tf_identified","no_git","cost"] }
