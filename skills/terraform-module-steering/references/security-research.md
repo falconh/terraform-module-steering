@@ -69,3 +69,8 @@ If the research yields few or no controls (e.g. a CloudWatch dashboard, an SNS t
 say so plainly and produce a short proposal. Do **not** invent encryption/public-access/logging
 framing where it does not apply. This is how the skill stays useful for *any* module, not just
 data-plane ones.
+
+**The benchmarks don't cover the same services.** A service can have provider controls (AWS FSBP) but
+**no** CIS Foundations controls — e.g. ECR is FSBP-only (ECR.1/2/3) with no CIS-AWS-Foundations
+entries. Don't pad the table with invented CIS IDs to mirror the FSBP rows: map each control by intent,
+cite the benchmark that actually defines it, and leave the other column empty when it has nothing.

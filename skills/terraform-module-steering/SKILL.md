@@ -46,7 +46,13 @@ result from it. The skill can hand the document to `superpowers:brainstorming` a
   the module's `docs/`). Documentation is part of "done". See
   [references/module-documentation.md](references/module-documentation.md).
 - **Evidence before claims.** Never say "compliant"/"passing" without running the verification
-  pipeline. See [references/verification-pipeline.md](references/verification-pipeline.md).
+  pipeline — `bash <skill-dir>/scripts/verify.sh <module-dir>` runs the whole pipeline (fmt, init,
+  validate, tflint, terraform test, checkov) in one shot. See
+  [references/verification-pipeline.md](references/verification-pipeline.md).
+- **Adapt to the runtime — interactive vs autonomous.** The workflow forks below ("ask the creator")
+  assume a human is present. When running non-interactively (CI, an eval, a `UserPromptSubmit` hook, or
+  an explicit "just build it"), do **not** block: take the secure-by-default choice at each fork, record
+  it in the steering doc / `BUILD_LOG.md`, and continue to a complete, verified result.
 
 ## Workflow
 
@@ -77,9 +83,12 @@ after verifying feasibility** with the chosen dependencies: the wrapped upstream
 declare version *floors* (`>=`), so the latest usually satisfies them — confirm there's no upper bound
 and that the language features you'll rely on exist. If the installed CLI is older and matching the
 latest needs an **upgrade, ask the creator's permission first**, then upgrade (e.g.
-`tfenv install <latest> && tfenv use <latest>`). For a NEW module you may set `required_version` to the
-latest; for an EXISTING module, **raising the declared `required_version` is a breaking change** for
-consumers — surface it (semver-major + migration note), don't apply it silently.
+`tfenv install <latest> && tfenv use <latest>`). **Declare the floor, don't pin the ceiling:** set the module's `required_version` to the *lowest*
+version that supports the language features you actually use (e.g. `>= 1.11` for `ephemeral` variables;
+otherwise the wrapped upstream's floor). Testing on the latest is not the same as declaring it the
+floor — declaring the latest would needlessly exclude consumers. For an EXISTING module, **raising the
+declared `required_version` is a breaking change** for consumers — surface it (semver-major + migration
+note), don't apply it silently.
 
 ---
 
