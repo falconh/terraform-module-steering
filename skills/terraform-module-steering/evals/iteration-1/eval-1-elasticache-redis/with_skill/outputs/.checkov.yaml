@@ -1,0 +1,25 @@
+# Checkov config for terraform-module-aws-elasticache-redis.
+#
+# Suppressions are applied INLINE (#checkov:skip=...) on the resources this
+# module owns, so each check stays active everywhere else. They are mirrored
+# here for documentation and so CI (bridgecrewio/checkov-action) honours the
+# same intent when run with --config-file. Every skip is a documented false
+# positive or an explicit out-of-scope decision (see docs/DESIGN.md).
+#
+# Suppressed (and why):
+#   CKV_AWS_111 / CKV_AWS_356 / CKV_AWS_109
+#       -> aws_iam_policy_document.kms: a KMS *key policy* always scopes to the
+#          key itself (resource "*" == this key); constraining it is N/A for key
+#          policies. No permissions-management actions are granted.
+#   CKV_TF_1
+#       -> registry modules pin by EXACT version (1.11.0), the correct supply-chain
+#          practice (CKV_TF_2 passes). Commit-hash pinning is for git sources only.
+#   CKV2_AWS_57
+#       -> aws_secretsmanager_secret.auth_token: Redis AUTH rotation must be
+#          coordinated with a cluster-side modify-replication-group call; a generic
+#          Secrets Manager rotation lambda cannot. Rotation is operator-driven and
+#          version-controlled via auth_token_wo_version.
+
+download-external-modules: true
+compact: true
+quiet: false

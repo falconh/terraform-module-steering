@@ -1,0 +1,13 @@
+# checkov configuration for terraform-module-aws-ecr.
+#
+# Every suppression below is a documented false-positive or an explicit
+# out-of-scope decision (see docs/DESIGN.md §4 and §6). No real security control
+# is suppressed — encryption, scanning, immutability, lifecycle, and TLS-deny all
+# remain enforced and verified.
+download-external-modules: true
+compact: true
+skip-check:
+  # Registry modules pin by EXACT version (terraform-aws-modules/ecr/aws = 3.2.0),
+  # which is the correct supply-chain practice and is validated by CKV_TF_2 (passes).
+  # A git commit-hash source does not apply to a Terraform Registry module.
+  - CKV_TF_1
