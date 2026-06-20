@@ -18,7 +18,12 @@ Locate the module (the creator names a path/repo). Read and record — change no
   itself a gap: it can be weakened).
 - **Structure & conventions:** file layout, wrap-vs-scratch, version pins, provider floors.
 - **Tests & examples:** what `tests/*.tftest.hcl` and `examples/` already cover.
-- **Current version:** from CHANGELOG/tags/registry, to anchor the next semver.
+- **Current version:** from CHANGELOG/tags/registry, to anchor the next semver. If the module carries
+  no version anywhere, treat it as `0.1.0` and say so.
+- **Before-state pipeline snapshot:** run the pipeline on the *unchanged* module first
+  (`scripts/verify.sh`) and record the numbers — the `terraform test` count and the checkov
+  passed/failed tally. That is your baseline: the change must keep every existing test green and reduce
+  checkov failures, and you can only *prove* that against the before-state.
 
 Use `code-intelligence`/`rg` to navigate. Produce a short "current state" snapshot.
 
@@ -80,6 +85,11 @@ verification delta. This is the deliverable.
 Same fork as greenfield (stop, or continue). If continuing, the build is a feature-add/refactor:
 - **TDD:** write a failing `terraform test` for the new feature and for each closed gap first; ensure
   the **existing** tests still pass throughout; then implement.
+- **"Keep existing tests green" is not "never touch the test files".** A new hardening resource that
+  validates its input as JSON (a KMS key policy, a TLS bucket policy) can make a bare
+  `mock_provider "aws" {}` in an existing test fail. Updating that test's `mock_data` *defaults* (not
+  its `run`/`assert` blocks) to satisfy the new resource is a permitted, expected part of keeping the
+  suite green — see the mock defaults in [verification-pipeline.md](verification-pipeline.md).
 - Add `moved {}` blocks for any address churn; verify with the full pipeline
   ([verification-pipeline.md](verification-pipeline.md)).
 - Still **no git operations** — leave the version bump/changelog/commit to the creator (you only state

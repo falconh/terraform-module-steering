@@ -15,6 +15,10 @@ checkov -d examples/minimal --config-file .checkov.yaml --download-external-modu
 A module is done when fmt is clean, validate succeeds, tflint is clean, every `terraform test` run
 passes, and checkov reports the in-scope security controls as passed (0 unexplained failures).
 
+Scan the **example** (`-d examples/minimal`), which instantiates the module with real inputs — not the
+bare module root with `checkov -d .`, which also scans anything cached under `.terraform/` (the
+downloaded provider/module) and inflates the counts with findings you don't own.
+
 ## `terraform test` with mock_provider (no credentials)
 
 Choose the run mode deliberately:
@@ -24,7 +28,13 @@ Choose the run mode deliberately:
   created key's rotation flag, or set/dynamic blocks that can't be indexed `[0]` under plan).
 - If the module declares an **`ephemeral`** (write-only) variable — e.g. a `password_wo` — then
   `command = apply` fails with *"ephemeral variable … was not set during the plan phase"* because
-  ephemeral values don't carry plan→apply in a test. Use `command = plan` for those runs.
+  ephemeral values don't carry plan→apply in a test. Use `command = plan` for those runs — which means
+  you **cannot assert on computed values** in them (computed attributes are unknown under plan); assert
+  only on plan-known inputs/locals/config. And "write-only" is a *resource capability*, not a given:
+  before promising it, check the provider schema (`terraform providers schema -json`) for a `write_only`
+  attribute. Many resources have none (e.g. an ElastiCache replication group's `auth_token`); the
+  portable path is to route the secret into Secrets Manager (`secret_string_wo`) and associate it
+  out-of-band, not pass it to the resource.
 
 Mock the data sources whose output is **format-validated** downstream, or the upstream module errors on
 mock junk. Two that bite almost every AWS wrap:
@@ -46,7 +56,10 @@ mock_provider "aws" {
 
 Assert on what the module *owns* (a created key's rotation flag, conditional resource counts,
 outputs). Asserting on attributes deep inside a wrapped upstream module is brittle — leave those to
-checkov.
+checkov. In particular, **a wrapped module does not expose its inputs back as outputs**: you cannot
+read the literals you passed via `module.<name>.<input>` (only its declared outputs exist), so the
+hardcoded security values you set can't be asserted that way. Verify those via checkov on the planned
+resource, or add an explicit pass-through output to *your* module if a value must be assertable.
 
 ### Gotchas that will waste a build cycle if you don't know them
 - **`check` block assertions are test *failures*, not warnings, under `terraform test`.** In real
@@ -93,9 +106,18 @@ Two more sources of false failures specific to **wrapping registry modules**:
   scope when the module deliberately uses the resource's **native** capability (e.g. native automated
   backups + point-in-time recovery).
 
+**KMS key-policy checks misfire on every module-managed CMK.** This skill's signature pattern is a
+module-managed customer CMK, whose key policy *must* keep a root-admin statement and use
+`Resource: "*"` (a key policy already scopes to the key it's attached to). checkov's IAM-identity
+checks — `CKV_AWS_109` (no constraints), `CKV_AWS_111` (write without constraint), `CKV_AWS_356`
+(`Resource: "*"`) — read that as over-broad and fail it. They are false positives on a *key* policy;
+suppress them with that reason wherever you create a CMK.
+
 ### Suppress honestly, scoped tightly
 - **Inline `#checkov:skip=<ID>:<reason>`** on resources *you* own (e.g. your KMS policy doc). This
-  keeps the check active everywhere else. Prefer this.
+  keeps the check active everywhere else. Prefer this — but it only works on resources defined in *your*
+  files: a finding reported *through a module call* (the resource lives under `.terraform/modules/...`)
+  cannot be annotated inline, so those have to go in the global `.checkov.yaml`.
 - **Global `skip-check` in `.checkov.yaml`** ONLY for checks that fire on upstream-internal resources
   you cannot annotate. Document each with a reason. Example:
 
@@ -107,6 +129,9 @@ skip-check:
   - CKV_AWS_21    # versioning -> aws_s3_bucket_versioning (false positive under static scan)
   - CKV_AWS_144   # cross-region replication — out of CIS/FSBP scope for this module
   - CKV_TF_1      # registry modules pin by exact version, not a commit hash — not applicable
+  - CKV_AWS_109   # KMS *key* policy must allow root admin — false positive (IAM-identity check on a key policy)
+  - CKV_AWS_111   # KMS *key* policy "write without constraint" — false positive on a key policy
+  - CKV_AWS_356   # KMS *key* policy Resource:"*" is correct (scopes to the key) — false positive
 ```
 
 Never silently suppress a real control. Every skip is a documented false-positive or an explicit
@@ -115,5 +140,9 @@ out-of-scope decision recorded in the steering doc.
 ## Tooling notes
 - Pass `config_file: .checkov.yaml` to the `bridgecrewio/checkov-action` in CI; without it the action
   ignores the documented suppressions and the compliance job fails.
+- **Don't leave build artifacts in the module.** Verification downloads things: `.terraform/` and
+  `.terraform.lock.hcl` (provider/module cache) and — easy to miss — `examples/minimal/.external_modules/`,
+  a full git clone that `checkov --download-external-modules` writes, plus any `tfplan`. Delete these
+  before the module is "done" (they are caches, not output).
 - For a reusable module, do **not** commit `.terraform.lock.hcl` (it's for root configs) — but that's
   the creator's call; this skill performs no git operations regardless.
