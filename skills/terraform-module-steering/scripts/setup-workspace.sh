@@ -47,6 +47,7 @@ check_plugin() { # ref  req|opt
 }
 
 echo "== Plugins =="
+check_plugin "superpowers@claude-plugins-official"  required
 check_plugin "terraform-skill@antonbabenko"      required
 check_plugin "context7@claude-plugins-official"  required
 check_plugin "code-intelligence@antonbabenko"    optional
